@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 3,
+  "featureId": "sales.discounts",
+  "app": "sales",
+  "surfaceType": "page",
+  "target": "page_sales_discounts",
+  "pageId": "page_sales_discounts",
+  "status": "review_required",
+  "observedAt": "2026-10-10",
+  "limitations": "本轮集成页面与原生动作源码，当前没有真实员工 GUI、审批、权限与 PostgreSQL 停服重启验收证据，所有维度待复核。 本轮仅重新绑定后续页面控件与价格编辑改动的待复核源码；保留全部未通过项，不表示业务验收。",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/sales-discounts.page.ts": "f0a706ae4c662a081b211d7cb98baded98dd27cbd42d9319c4ecb86e6511068b",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "19a9b07c1c0dc3260c977274213195173c91daec290d4a09791249d2b3c5b7af",
+    "apps/forge-objectstack/src/actions/sales-adjustment.action.ts": "28f52dbfcf486dea5ae4429704c839e41afb99013371ada6623d11b75cb1e871",
+    "apps/forge-objectstack/src/objects/sales-adjustment.object.ts": "4ad4013483f07408e2e90095fd7588ffceac20ab3b2ecabdc348c0dc3070be71"
+  },
+  "requirements": [
+    {
+      "id": "sales.discounts.layout",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/销售费用与优惠申请.md"
+      },
+      "statement": "销售优惠列表、申请弹窗与筛选在桌面、窄屏和错误态可用。",
+      "status": "pending",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-discounts.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/actions/sales-adjustment.action.ts",
+        "apps/forge-objectstack/src/objects/sales-adjustment.object.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "sales.discounts.interaction",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/销售费用与优惠申请.md"
+      },
+      "statement": "本人为可办理订单保存优惠草稿，独立原生复核，批准后按合同人工调整订单。",
+      "status": "pending",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-discounts.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/actions/sales-adjustment.action.ts",
+        "apps/forge-objectstack/src/objects/sales-adjustment.object.ts"
+      ],
+      "evidence": []
+    }
+  ],
+  "checks": {
+    "requirements": {
+      "status": "pending",
+      "notes": "本轮未形成该维度验收证据。",
+      "evidence": []
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "本轮未形成该维度验收证据。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "本轮未形成该维度验收证据。",
+      "evidence": []
+    },
+    "business": {
+      "status": "pending",
+      "notes": "本轮未形成该维度验收证据。",
+      "evidence": []
+    },
+    "permissions": {
+      "status": "pending",
+      "notes": "本轮未形成该维度验收证据。",
+      "evidence": []
+    },
+    "persistence": {
+      "status": "pending",
+      "notes": "本轮未形成该维度验收证据。",
+      "evidence": []
+    },
+    "performance": {
+      "status": "pending",
+      "notes": "本轮未形成该维度验收证据。",
+      "evidence": []
+    }
+  },
+  "sourceScopeUpdatedAt": "2026-10-10"
+}

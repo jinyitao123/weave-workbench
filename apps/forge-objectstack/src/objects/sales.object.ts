@@ -224,7 +224,7 @@ export const SalesOrder = master('forge_sales_order', '销售订单', 'clipboard
   review_owner_id: Field.user({ label: '订单复核人', readonly: true }),
   submitted_line_summary: Field.textarea({ label: '本次复核明细', readonly: true }),
   submitted_order_digest: Field.text({ label: '提交依据', maxLength: 64, hidden: true, readonly: true }),
-  approval_outcome: Field.select([{ value: 'pending', label: '待复核' }, { value: 'approved', label: '已同意' }, { value: 'rejected', label: '已拒绝' }, { value: 'recalled', label: '已撤回' }], { label: '原生审批结果', readonly: true }),
+  approval_outcome: Field.select([{ value: 'pending', label: '待审批' }, { value: 'approved', label: '已同意' }, { value: 'rejected', label: '已拒绝' }, { value: 'recalled', label: '已撤回' }], { label: '原生审批结果', readonly: true }),
   collaborator_ids: Field.lookup('sys_user', { label: '协同销售', multiple: true, relatedList: false }),
   use_credit: Field.boolean({ label: '使用授信额度', defaultValue: false }), payment_term: text('付款条件', true), payment_method: paymentMethod(),
   revenue_trigger: revenueTrigger(), total_amount: nonNegativeMoney('订单含税金额'), recognized_amount: nonNegativeMoney('已确认收入'),

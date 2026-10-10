@@ -1,4 +1,5 @@
 import { ProjectBusinessDatePlugin } from './src/plugins/project-business-date.plugin.js';
+import { SalesPricingBusinessDatePlugin } from './src/plugins/sales-pricing-business-date.plugin.js';
 import { OrganizationBusinessDateQueryPlugin } from './src/plugins/sales-performance-business-date.plugin.js';
 import { SalesPerformanceCalendarPlugin } from './src/plugins/sales-performance-calendar.plugin.js';
 import { ProjectRlsMembershipPlugin } from './src/plugins/project-rls-membership.plugin.js';
@@ -69,6 +70,7 @@ export default defineStack({
     projectAttachmentNativeActionsPlugin,
     ...forgeApplicationPlugins,
     new ProjectBusinessDatePlugin(),
+    new SalesPricingBusinessDatePlugin(),
     new OrganizationBusinessDateQueryPlugin(),
     new SalesPerformanceCalendarPlugin(),
     new ProjectRlsMembershipPlugin(),

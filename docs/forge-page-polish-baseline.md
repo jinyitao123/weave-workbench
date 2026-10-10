@@ -199,3 +199,10 @@
 | `page_invoice_overview` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-invoice-overview.json) | [历史观察](../docs/evidence/finance-narrow-metrics-20260917/invoice_overview.json) |
 | `page_output_invoices` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-output-invoices.json) | [历史观察](../docs/evidence/finance-narrow-metrics-20260917/output_invoices.json) |
 | `page_invoice_tasks` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-invoice-tasks.json) | [历史观察](../docs/evidence/finance-invoice-tasks-narrow-20260916/acceptance.json) |
+
+
+## 当前统一控件集成的工程边界
+
+2026-10-10 本地页面改动从既有主线单独收束，原工作树源码保留。215 个实际注册的嵌入 React 源码全部解析；修正 BOM、SN 详情多余符号与库存归还 JSX 结束符。页面门禁识别统一 `ForgeButton`，11 份 schemaVersion 3 当前记录仅重新绑定待复核源码范围，所有分项保持原有未通过状态。历史观察、历史截图与原始结论不改写。
+
+本轮 Console 延用既有主线锁，依赖包、补丁与构建工具要求不变。`pnpm build`、导航、认证 adapter 与源码解析属于工程检查；GUI 可用性、RISEMAP 对照与业务结果仍需各自证据。

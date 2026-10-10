@@ -22,6 +22,7 @@ assert.match(ProjectCenterPage.source, /page_delivery_acceptance_workspace\?type
 assert.ok(ProjectCenterPage.source.includes("function bomWorkspaceHref(bomId){const query=new URLSearchParams({project:projectId});if(bomId)query.set('id',bomId);return '/apps/com.inoforge.forge.supply-chain/page_bom_workspace?'+query.toString();}"), 'BOM routes carry selected project and optional record context');
 assert.doesNotMatch(ProjectCenterPage.source, /headers=\['任务编号'/, 'project detail does not expose plan-derived internal item keys');
 assert.doesNotMatch(ProjectCenterPage.source, /x\.item_key\|\|'—'/, 'project detail does not render the plan id composite as a task number');
-assert.doesNotMatch(ProjectCenterPage.source, /拖拽文件到此处上传|Ctrl\+V 粘贴截图/, 'project attachment UI does not advertise missing upload gestures');
+const { ProjectAttachmentPanelSource } = await import('../src/pages/project-attachment-panel.ts');
+assert.doesNotMatch(ProjectAttachmentPanelSource, /拖拽文件到此处上传|Ctrl\+V 粘贴截图/, 'project attachment UI does not advertise missing upload gestures');
 assert.match(ProjectCenterPage.source, /<ProjectAttachmentPanel projectId=\{projectId\}.*canUpload=\{state\.permissions\.systemPermissions\?\.includes\('forge_project_work_member'\)\|\|state\.permissions\.systemPermissions\?\.includes\('forge_project_manager'\)\}/, 'project attachment upload uses the controlled member/manager panel, not generic object create permission');
 process.stdout.write('PASS page_project_center embedded React source parses\n');

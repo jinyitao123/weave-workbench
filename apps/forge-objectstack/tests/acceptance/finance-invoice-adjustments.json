@@ -6,12 +6,12 @@
   "target": "page_invoice_adjustments",
   "pageId": "page_invoice_adjustments",
   "status": "review_required",
-  "observedAt": "2026-10-07",
+  "observedAt": "2026-10-10",
   "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/invoice_adjustments.json",
-  "limitations": "仅将历史观察与当前版本准入分离。历史JSON、原分项pass及截图路径保持原义；公开仓库缺少历史图片，当前证据不可得。不代表功能失败，不启动财务业务范围，不构成页面或业务验收通过。subjectFiles仅固定待复核源码范围，不是已复核版本声明。",
+  "limitations": "仅将历史观察与当前版本准入分离。历史JSON、原分项pass及截图路径保持原义；公开仓库缺少历史图片，当前证据不可得。不代表功能失败，不启动财务业务范围，不构成页面或业务验收通过。subjectFiles仅固定待复核源码范围，不是已复核版本声明。 本轮仅重新绑定统一控件改动后的待复核源码范围，所有分项仍未通过；不修改历史观察与截图。 本轮仅重新绑定后续页面控件与价格编辑改动的待复核源码；保留全部未通过项，不表示业务验收。",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/invoice-audit.page.ts": "09ae81daede39b4eae7990a3c27f0715d9c0c81dd4b538e2ca81881e34124d3f",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86"
+    "apps/forge-objectstack/src/pages/invoice-audit.page.ts": "f71e0d5abd816791d2f2d9e76ed749d5589bfcd700d03e5dfb4df7aae7d86964",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "19a9b07c1c0dc3260c977274213195173c91daec290d4a09791249d2b3c5b7af"
   },
   "requirements": [
     {
@@ -79,5 +79,6 @@
       "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
       "evidence": []
     }
-  }
+  },
+  "sourceScopeUpdatedAt": "2026-10-10"
 }
