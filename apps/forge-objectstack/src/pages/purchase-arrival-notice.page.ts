@@ -18,11 +18,10 @@ function App(){
 <style>{css}</style>
 <div className="shell">
 <ForgeHero section="供应链 / 到货检验 / 到货通知" title="到货通知" description="采购订单审核后进入目标仓库待到货队列" icon="▤" tone="blue" art="flow"/>{s.error&&<div className="notice">{s.error}</div>}<section className="card">
-<div className="fp-card-toolbar"><button className="fp-button primary" disabled={selected.length!==1} onClick={()=>register(selected[0])}>合并到货登记</button><span className="fp-grow"/><ForgeListSettings/><button className="fp-icon-button" aria-label="刷新" title="刷新" onClick={load}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button></div>
+<div className="fp-card-toolbar"><ForgeButton className="fp-button primary" disabled={selected.length!==1} onClick={()=>register(selected[0])}>合并到货登记</ForgeButton><span className="fp-grow"/><ForgeListSettings/><ForgeButton className="fp-icon-button" aria-label="刷新" title="刷新" onClick={load}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></ForgeButton></div>
 <div className="filters">
 <input aria-label="搜索到货通知" placeholder="通知单号 / 采购订单 / 供应商 / 物料" value={query} onChange={e=>{setQuery(e.target.value);setPage(1)}}/>
-<ForgeDateInput aria-label="预计到货开始日期" value={start} onChange={e=>{setStart(e.target.value);setPage(1)}}/>
-<ForgeDateInput aria-label="预计到货结束日期" value={end} onChange={e=>{setEnd(e.target.value);setPage(1)}}/>
+<ForgeDateRange label="日期范围" onChange={range=>{(e=>{setStart(e.target.value);setPage(1)})({target:{value:range[0]},currentTarget:{value:range[0]}});(e=>{setEnd(e.target.value);setPage(1)})({target:{value:range[1]},currentTarget:{value:range[1]}})}}><ForgeDateInput aria-label="预计到货开始日期" value={start} onChange={e=>{setStart(e.target.value);setPage(1)}}/><ForgeDateInput aria-label="预计到货结束日期" value={end} onChange={e=>{setEnd(e.target.value);setPage(1)}}/></ForgeDateRange>
 <ForgeSelectControl aria-label="筛选目标仓库" value={warehouse} onChange={e=>{setWarehouse(e.target.value);setPage(1)}}>
 <option value="">全部目标仓库</option>{s.warehouses.map(x=>
 <option key={x.id} value={x.id}>{x.name}</option>)}</ForgeSelectControl>
@@ -36,7 +35,7 @@ function App(){
 </ForgeSelectControl>
 </div>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>选择到货通知</th>
@@ -71,19 +70,19 @@ function App(){
 <td>{x.responsible_id?'Dev Admin':'—'}</td>
 <td>
 <div className="actions">
-<button className="fp-icon-button row-action" aria-label="查看" title="查看" onClick={()=>setDetail(x)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button>{!['arrived','cancelled'].includes(x.status)&&<button className="btn primary" onClick={()=>register(x.id)}>登记到货</button>}</div>
+<ForgeButton className="fp-icon-button row-action" aria-label="查看" title="查看" onClick={()=>setDetail(x)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></ForgeButton>{!['arrived','cancelled'].includes(x.status)&&<ForgeButton className="btn primary" onClick={()=>register(x.id)}>登记到货</ForgeButton>}</div>
 </td>
 </tr>)}{!rows.length&&<tr>
 <td colSpan="9" className="arrival-empty-cell">暂无匹配的到货通知</td>
 </tr>}</tbody>
-</table>
+</ForgeTable>
 </div>
 <div className="pager">
 <span>共 {filtered.length} 条记录 · 每页 20 条</span>
 <div className="actions">
-<button className="btn" disabled={safe<=1} onClick={()=>setPage(safe-1)}>上一页</button>
+<ForgeButton className="btn" disabled={safe<=1} onClick={()=>setPage(safe-1)}>上一页</ForgeButton>
 <span>{safe} / {pages}</span>
-<button className="btn" disabled={safe>=pages} onClick={()=>setPage(safe+1)}>下一页</button>
+<ForgeButton className="btn" disabled={safe>=pages} onClick={()=>setPage(safe+1)}>下一页</ForgeButton>
 </div>
 </div>
 </section>

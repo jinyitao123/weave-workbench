@@ -473,21 +473,21 @@
             "icon": "badge-dollar-sign",
             "navigation": [
               {
-                "id": "sales_contracts",
-                "label": "框架销售合同",
-                "icon": "scroll-text",
-                "type": "page",
-                "pageName": "page_sales_contract_workspace",
-                "requiredPermissions": [
-                  "sales_contract_operator"
-                ]
-              },
-              {
                 "id": "sales_business",
                 "label": "销售业务",
                 "type": "group",
                 "expanded": true,
                 "children": [
+                  {
+                    "id": "sales_contracts",
+                    "label": "框架销售合同",
+                    "icon": "scroll-text",
+                    "type": "page",
+                    "pageName": "page_sales_contract_workspace",
+                    "requiredPermissions": [
+                      "sales_contract_operator"
+                    ]
+                  },
                   {
                     "id": "sales_orders",
                     "label": "销售订单",
@@ -504,6 +504,13 @@
                     "icon": "receipt",
                     "type": "page",
                     "pageName": "page_sales_additional_fee"
+                  },
+                  {
+                    "id": "sales_discounts",
+                    "label": "销售优惠",
+                    "icon": "badge-percent",
+                    "type": "page",
+                    "pageName": "page_sales_discounts"
                   },
                   {
                     "id": "sales_collections",

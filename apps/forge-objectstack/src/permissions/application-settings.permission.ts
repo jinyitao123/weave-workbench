@@ -118,6 +118,10 @@ export const salesSettingsManagerPermission = definePermissionSet({
   description: '维护销售应用拥有的客户、报价和合同类型配置。',
   systemPermissions: ['forge_sales_settings_manage'],
   objects: {
+    forge_sales_price_group: orgRead,
+    forge_sales_price_group_member: orgRead,
+    forge_material_sku: orgRead,
+    forge_material: orgRead,
     forge_customer_category: orgManage,
     forge_customer_level: orgManage,
     forge_quotation_type: orgManage,

@@ -1,4 +1,5 @@
 import { ProjectBusinessDatePlugin } from './src/plugins/project-business-date.plugin.js';
+import { SalesPricingBusinessDatePlugin } from './src/plugins/sales-pricing-business-date.plugin.js';
 import { OrganizationBusinessDateQueryPlugin } from './src/plugins/sales-performance-business-date.plugin.js';
 import { SalesPerformanceCalendarPlugin } from './src/plugins/sales-performance-calendar.plugin.js';
 import { ProjectRlsMembershipPlugin } from './src/plugins/project-rls-membership.plugin.js';
@@ -43,7 +44,7 @@ export default defineStack({
   plugins: [
     new AutomationServicePlugin(),
     new MessagingServicePlugin(),
-    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract', 'forge_sales_order', 'forge_sales_performance_confirmation', 'forge_sales_performance_rebook', 'forge_sales_performance_entry', 'forge_sales_performance_entry_source'] }),
+    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_price_request', 'forge_sales_price_request_line', 'forge_sales_discount_request', 'forge_sales_additional_fee', 'forge_sales_additional_fee_line', 'forge_sales_contract', 'forge_sales_order', 'forge_sales_performance_confirmation', 'forge_sales_performance_rebook', 'forge_sales_performance_entry', 'forge_sales_performance_entry_source'] }),
     new SharingServicePlugin(),
     new ServiceFileReferenceTransactionBridgePlugin(),
     new ApprovalResubmitGuardPlugin({
@@ -69,6 +70,7 @@ export default defineStack({
     projectAttachmentNativeActionsPlugin,
     ...forgeApplicationPlugins,
     new ProjectBusinessDatePlugin(),
+    new SalesPricingBusinessDatePlugin(),
     new OrganizationBusinessDateQueryPlugin(),
     new SalesPerformanceCalendarPlugin(),
     new ProjectRlsMembershipPlugin(),
