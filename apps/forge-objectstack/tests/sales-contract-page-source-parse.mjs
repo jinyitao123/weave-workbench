@@ -1,3 +1,4 @@
+import './registered-page-source-parse.mjs';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { SalesContractCreatePage } from '../src/pages/sales-contract-create.page.ts';

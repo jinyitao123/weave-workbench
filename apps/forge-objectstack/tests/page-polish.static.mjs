@@ -50,7 +50,7 @@ for (const [area, entries] of Object.entries(manifest)) {
           ['产品根节点', /forge-product|forge-workbench/],
           // ForgeHero is the branded heading area for pages that lead with a hero.
           ['工作台标题区', /ForgeHero|ForgePageHeader|<(?:WorkspaceHeader|PageHeader)\b|fp-page-header|wb-welcome|ws-hero/],
-          ['可执行按钮', /<button\b[^>]*onClick=/],
+          ['可执行按钮', /<(?:button|ForgeButton)\b[^>]*onClick=/],
         ]
       : [
           ['product-ui.ts 样式', /forgeProductUiCss/],
@@ -59,7 +59,7 @@ for (const [area, entries] of Object.entries(manifest)) {
           // The branded hero (allowed by the polish baseline since 2026-09-17) is a
           // standard heading area too: it carries the业务面包屑、标题与说明.
           ['标准标题区', /ForgeHero|ForgePageHeader|<(?:WorkspaceHeader|PageHeader)\b|fp-page-header/],
-          ['可执行按钮', /<button\b[^>]*onClick=/],
+          ['可执行按钮', /<(?:button|ForgeButton)\b[^>]*onClick=/],
         ];
     for (const [label, pattern] of structuralPatterns) if (!pattern.test(source)) findings.push(`${area}/${entry.file}: 缺少${label}`);
     for (const [label, pattern] of [

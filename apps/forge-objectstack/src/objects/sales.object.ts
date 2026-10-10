@@ -224,7 +224,7 @@ export const SalesOrder = master('forge_sales_order', '销售订单', 'clipboard
   review_owner_id: Field.user({ label: '订单复核人', readonly: true }),
   submitted_line_summary: Field.textarea({ label: '本次复核明细', readonly: true }),
   submitted_order_digest: Field.text({ label: '提交依据', maxLength: 64, hidden: true, readonly: true }),
-  approval_outcome: Field.select([{ value: 'pending', label: '待复核' }, { value: 'approved', label: '已同意' }, { value: 'rejected', label: '已拒绝' }, { value: 'recalled', label: '已撤回' }], { label: '原生审批结果', readonly: true }),
+  approval_outcome: Field.select([{ value: 'pending', label: '待审批' }, { value: 'approved', label: '已同意' }, { value: 'rejected', label: '已拒绝' }, { value: 'recalled', label: '已撤回' }], { label: '原生审批结果', readonly: true }),
   collaborator_ids: Field.lookup('sys_user', { label: '协同销售', multiple: true, relatedList: false }),
   use_credit: Field.boolean({ label: '使用授信额度', defaultValue: false }), payment_term: text('付款条件', true), payment_method: paymentMethod(),
   revenue_trigger: revenueTrigger(), total_amount: nonNegativeMoney('订单含税金额'), recognized_amount: nonNegativeMoney('已确认收入'),
@@ -274,6 +274,18 @@ export const SalesShipmentLine = master('forge_sales_shipment_line', '发货物�
 
 
 export const SalesAdditionalFee = master('forge_sales_additional_fee', '销售附加费用单', 'receipt', {
+  request_key: Field.text({ label: '保存请求标识', maxLength: 128, hidden: true, readonly: true, unique: 'organization' }),
+  request_signature: Field.textarea({ label: '保存请求摘要', hidden: true, readonly: true }),
+  save_receipts: Field.textarea({ label: '保存请求回执', hidden: true, readonly: true }),
+  revision: Field.number({ label: '记录版本', min: 0, scale: 0, defaultValue: 0, hidden: true, readonly: true }),
+  untaxed_amount: nonNegativeMoney('不含税合计'), tax_amount: nonNegativeMoney('税额合计'),
+  project_id: reference('forge_project', '关联项目'),
+  settlement_type: Field.select([{ value: 'order', label: '订单直接结算' }, { value: 'project', label: '项目结算' }], { label: '结算层级', defaultValue: 'order' }),
+  expected_settlement_on: Field.date({ label: '预计结算日期' }),
+  approval_status: Field.text({ label: '原生审批状态', hidden: true, readonly: true }),
+  review_owner_id: Field.user({ label: '复核人', readonly: true }),
+  submitted_by: Field.user({ label: '提交人', readonly: true }),
+  submitted_at: Field.datetime({ label: '提交时间', readonly: true }),
   name: text('费用名称', true), code: code('费用单号'), source_type: Field.select([
     { value: 'sales_order', label: '销售订单' }, { value: 'sales_contract', label: '框架销售合同' }, { value: 'sales_shipment', label: '销售发货单' }, { value: 'manual', label: '手工登记' },
   ], { label: '来源类型', defaultValue: 'sales_order', ...required }),

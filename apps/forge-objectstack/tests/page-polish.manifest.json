@@ -1553,6 +1553,31 @@
       "designStatus": "review_required",
       "contract": "docs/forge-sales-service-page-contract-20260913.md",
       "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_config.json"
+    },
+    {
+      "file": "sales-discounts.page.ts",
+      "pages": [
+        "page_sales_discounts"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/销售费用与优惠申请.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/sales-discounts.json",
+      "featureId": "sales.discounts",
+      "app": "sales",
+      "surfaceType": "page",
+      "target": "page_sales_discounts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-discounts.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/actions/sales-adjustment.action.ts",
+        "apps/forge-objectstack/src/objects/sales-adjustment.object.ts"
+      ],
+      "requirementIds": [
+        "sales.discounts.layout",
+        "sales.discounts.interaction"
+      ]
     }
   ],
   "project": [

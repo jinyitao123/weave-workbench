@@ -408,6 +408,8 @@ export const financeReviewerPermission = defineOtcPermissionSet({
   description: '读取待复核的收款分配与应收记录；核销决定须由受控业务动作校验且不得自审。',
   systemPermissions: ['forge_finance_reviewer', 'forge_sales_gross_profit_read'],
   objects: {
+    forge_sales_additional_fee: orgRead,
+    forge_sales_additional_fee_line: orgRead,
     forge_sales_invoice: orgRead,
     forge_accounts_receivable: orgRead,
     forge_cash_receipt: orgRead,

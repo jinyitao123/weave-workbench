@@ -35,4 +35,7 @@ export * from './service-quotation-receipt.object.js';
 export * from './service-quotation-line.object.js';
 export * from './project-member-position-assignment.object.js';
 export * from './sales-performance.object.js';
+export * from './sales-adjustment.object.js';
 export * from './sales-gross-profit.object.js';
+export * from './sales-pricing.object.js';
+export { MaterialSku } from './sales-pricing-sku.object.js';
