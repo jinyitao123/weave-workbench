@@ -52,6 +52,7 @@ export const salesContractOperatorPermission = definePermissionSet({
       readScope: 'own',
       writeScope: 'own',
     },
+    forge_sales_additional_fee_line: { allowRead: true, readScope: 'own' },
     sys_file: readOwnRecords,
     forge_customer: readOwnRecords,
     forge_customer_category: readOrganizationReferenceData,

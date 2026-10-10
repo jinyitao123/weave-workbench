@@ -26,9 +26,9 @@ function App(){const adapter=useAdapter();
 <style>{${JSON.stringify(sharedCss)}}</style>
 <div className="body"><ForgeHero section="供应链 / 到货检验 / 待检验库存" title="待检验库存" description="每个物料独立一条待检记录，关联来料检验流程" icon="▤" tone="green" art="blueprint" next={{label:"检验单",href:'/_console/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace',title:"下一步操作 · 检验单",to:'/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace'}}/>{state.error&&<div className="notice">{state.error}</div>}{toast&&<div className="notice">{toast}</div>}<div className="card">
 <div className="toolbar">
-<button className="btn" disabled={!filteredRows.length} onClick={exportRows}>导出</button>
-<button className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</button>
-<ForgeListSettings/><button className="fp-icon-button" aria-label="刷新" title="刷新" onClick={()=>{setToast('');load();}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
+<ForgeButton className="btn" disabled={!filteredRows.length} onClick={exportRows}>导出</ForgeButton>
+<ForgeButton className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</ForgeButton>
+<ForgeListSettings/><ForgeButton className="fp-icon-button" aria-label="刷新" title="刷新" onClick={()=>{setToast('');load();}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></ForgeButton>
 </div>
 <div className="toolbar">
 <input aria-label="搜索待检记录" placeholder="搜索待检单号、物料编码、物料名称、供应商、批次号..." value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/>
@@ -41,7 +41,7 @@ function App(){const adapter=useAdapter();
 </ForgeSelectControl>
 </div>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>待检单号</th>
@@ -81,15 +81,15 @@ function App(){const adapter=useAdapter();
 <ForgeSelectControl aria-label={row.item_code+' 检验方式'} value={methods[row.id]||'full'} onChange={e=>setMethods(m=>({...m,[row.id]:e.target.value}))}>
 <option value="full">全检</option>
 <option value="sampling">抽检</option>
-</ForgeSelectControl> <button className="btn primary" disabled={busy===row.id} onClick={()=>create(row)}>生成检验单</button>
-</span>:row.inspection_id?<button className="fp-icon-button row-action" aria-label="查看检验单" title="查看检验单" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace?id='+encodeURIComponent(row.inspection_id))}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button>:'—'}</td>
+</ForgeSelectControl> <ForgeButton className="btn primary" disabled={busy===row.id} onClick={()=>create(row)}>生成检验单</ForgeButton>
+</span>:row.inspection_id?<ForgeButton className="fp-icon-button row-action" aria-label="查看检验单" title="查看检验单" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace?id='+encodeURIComponent(row.inspection_id))}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></ForgeButton>:'—'}</td>
 </tr>)}</tbody>
-</table>{!state.loading&&!rows.length&&<div className="muted" style={{padding:40,textAlign:'center'}}>暂无匹配的待检记录</div>}</div>
+</ForgeTable>{!state.loading&&!rows.length&&<div className="muted" style={{padding:40,textAlign:'center'}}>暂无匹配的待检记录</div>}</div>
 <div className="toolbar" style={{justifyContent:'flex-end',marginTop:12}}>
 <span className="muted">共 {filteredRows.length} 条 · 20 条/页</span>
-<button className="btn" disabled={safePage<=1} onClick={()=>setPage(p=>Math.max(1,p-1))}>上一页</button>
+<ForgeButton className="btn" disabled={safePage<=1} onClick={()=>setPage(p=>Math.max(1,p-1))}>上一页</ForgeButton>
 <span>{safePage} / {totalPages}</span>
-<button className="btn" disabled={safePage>=totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))}>下一页</button>
+<ForgeButton className="btn" disabled={safePage>=totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))}>下一页</ForgeButton>
 </div>
 </div>{dialog&&<ForgeDialog open title={dialog.title} subtitle={dialog.subtitle} error={dialog.error} busy={!!busy} confirmLabel="确认生成" onCancel={()=>!busy&&setDialog(null)} onConfirm={()=>runCreate(dialog.row)}>
 <div className="notice">{dialog.impact}</div>
@@ -140,7 +140,7 @@ function App(){const adapter=useAdapter();
  if(!id)return <div className="forge-product forge-procurement forge-iqc">
 <style>{${JSON.stringify(sharedCss)}}</style>
 <div className="body"><ForgeHero section="供应链 / 到货检验 / 检验单" title="检验单" description="每条检验单对应一种物料的来料检验。" icon="▤" tone="green" art="blueprint" next={{label:"采购入库",href:'/_console/apps/com.inoforge.forge.supply-chain/page_purchase_inbound_workspace',title:"下一步操作 · 采购入库",to:'/apps/com.inoforge.forge.supply-chain/page_purchase_inbound_workspace'}}/>{state.error&&<div className="notice">{state.error}</div>}{toast&&<div className="notice">{toast}</div>}<div className="card">
-<div className="fp-card-toolbar"><button className="fp-button" disabled={!(inspectionSelected.length||filteredRows.length)} onClick={()=>exportRows(inspectionSelected)}>导出{inspectionSelected.length?'选中 '+inspectionSelected.length:''} ▾</button><button className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</button><span className="fp-grow"/><ForgeListSettings/><button className="fp-icon-button" aria-label="刷新" title="刷新" onClick={()=>{setToast('');load();}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button></div>
+<div className="fp-card-toolbar"><ForgeButton className="fp-button" disabled={!(inspectionSelected.length||filteredRows.length)} onClick={()=>exportRows(inspectionSelected)}>导出{inspectionSelected.length?'选中 '+inspectionSelected.length:''} ▾</ForgeButton><ForgeButton className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</ForgeButton><span className="fp-grow"/><ForgeListSettings/><ForgeButton className="fp-icon-button" aria-label="刷新" title="刷新" onClick={()=>{setToast('');load();}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></ForgeButton></div>
 <div className="toolbar">
 <input aria-label="搜索检验单" placeholder="搜索检验单号/物料名..." value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/>
 <ForgeSelectControl aria-label="状态筛选" value={statusFilter} onChange={e=>{setStatusFilter(e.target.value);setPage(1);}}>
@@ -163,12 +163,10 @@ function App(){const adapter=useAdapter();
 <ForgeSelectControl aria-label="供应商筛选" value={supplierFilter} onChange={e=>{setSupplierFilter(e.target.value);setPage(1);}}>
 <option value="">供应商</option>{Object.values(state.suppliers).map(s=>
 <option key={s.id} value={s.id}>{s.name}</option>)}</ForgeSelectControl>
-<ForgeDateInput aria-label="开始日期" value={startDate} onChange={e=>{setStartDate(e.target.value);setPage(1);}}/>
-<span className="muted">~</span>
-<ForgeDateInput aria-label="结束日期" value={endDate} onChange={e=>{setEndDate(e.target.value);setPage(1);}}/>
+<ForgeDateRange label="日期范围" onChange={range=>{(e=>{setStartDate(e.target.value);setPage(1);})({target:{value:range[0]},currentTarget:{value:range[0]}});(e=>{setEndDate(e.target.value);setPage(1);})({target:{value:range[1]},currentTarget:{value:range[1]}})}}><ForgeDateInput aria-label="开始日期" value={startDate} onChange={e=>{setStartDate(e.target.value);setPage(1);}}/><ForgeDateInput aria-label="结束日期" value={endDate} onChange={e=>{setEndDate(e.target.value);setPage(1);}}/></ForgeDateRange>
 </div>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th><input type="checkbox" aria-label="选择当前页" checked={visibleRows.length>0&&inspectionSelected.length===visibleRows.length} onChange={()=>setInspectionSelected(inspectionSelected.length===visibleRows.length?[]:visibleRows.map(r=>r.id))}/></th>
@@ -203,15 +201,15 @@ function App(){const adapter=useAdapter();
 <td>{state.users?.[row.inspector_id]?.display_name||state.users?.[row.inspector_id]?.name||'—'}</td>
 <td>{state.receipts[row.receipt_id]?.arrived_on||'—'}</td>
 <td>
-<button className="fp-icon-button row-action" aria-label="查看" title="查看" onClick={()=>window.location.href=window.location.pathname+'?id='+encodeURIComponent(row.id)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+<ForgeButton className="fp-icon-button row-action" aria-label="查看" title="查看" onClick={()=>window.location.href=window.location.pathname+'?id='+encodeURIComponent(row.id)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></ForgeButton>
 </td>
 </tr>)}</tbody>
-</table>{!state.loading&&!visibleRows.length&&<div className="muted" style={{padding:40,textAlign:'center'}}>暂无检验单</div>}</div>
+</ForgeTable>{!state.loading&&!visibleRows.length&&<div className="muted" style={{padding:40,textAlign:'center'}}>暂无检验单</div>}</div>
 <div className="toolbar" style={{justifyContent:'flex-end',marginTop:12}}>
 <span className="muted">共 {filteredRows.length} 条 · 20 条/页</span>
-<button className="btn" disabled={safePage<=1} onClick={()=>setPage(p=>Math.max(1,p-1))}>上一页</button>
+<ForgeButton className="btn" disabled={safePage<=1} onClick={()=>setPage(p=>Math.max(1,p-1))}>上一页</ForgeButton>
 <span>{safePage} / {totalPages}</span>
-<button className="btn" disabled={safePage>=totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))}>下一页</button>
+<ForgeButton className="btn" disabled={safePage>=totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))}>下一页</ForgeButton>
 </div>
 </div>{taskOpen&&<ForgeDialog open title="导入/导出任务" subtitle="检验单" confirmLabel="关闭" onCancel={()=>setTaskOpen(false)} onConfirm={()=>setTaskOpen(false)}>
 <div className="notice">导出任务由当前筛选结果即时生成。</div>
@@ -229,7 +227,7 @@ function App(){const adapter=useAdapter();
 </div>;
  return <div className="forge-product forge-procurement forge-iqc">
 <style>{${JSON.stringify(sharedCss)}}</style>
-<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货检验 / 检验单" title={record.code} description={'来源 '+state.receipt.code+' · '+record.item_code+' · '+statusText[record.status]} actions={<><button className="fp-button" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace')}>返回待检列表</button>{record.status==='pending'&&<button className="fp-button primary" disabled={busy} onClick={complete}>完成检验</button>}{record.status==='completed'&&Number(record.accepted_quantity||0)>0&&<button className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inbound_workspace?order='+encodeURIComponent(record.order_id))}>采购入库</button>}</>}/></div>
+<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货检验 / 检验单" title={record.code} description={'来源 '+state.receipt.code+' · '+record.item_code+' · '+statusText[record.status]} actions={<><ForgeButton className="fp-button" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace')}>返回待检列表</ForgeButton>{record.status==='pending'&&<ForgeButton className="fp-button primary" disabled={busy} onClick={complete}>完成检验</ForgeButton>}{record.status==='completed'&&Number(record.accepted_quantity||0)>0&&<ForgeButton className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inbound_workspace?order='+encodeURIComponent(record.order_id))}>采购入库</ForgeButton>}</>}/></div>
 <div className="body">{state.error&&<div className="notice">{state.error}</div>}<div className="card">
 <div className="details">
 <div className="value">
@@ -250,7 +248,7 @@ function App(){const adapter=useAdapter();
 <small>批次</small>{record.batch_number||'—'}</div>
 </div>
 </div>
-<div className="card"><div className="fp-card-toolbar"><strong>检验结果录入</strong><span className="fp-grow"/>{record.status==='pending'?<ForgeSelectControl aria-label="记录方式" className="fp-select" value={recordMode} onChange={e=>setRecordMode(e.target.value)}><option value="summary">汇总数量录入</option><option value="item">逐项录入</option></ForgeSelectControl>:<span className="fp-secondary">记录方式 {recordMode==='item'?'逐项录入':'汇总数量录入'}</span>}<span className="fp-secondary">{items.length} 项 / 抽样 {record.total_quantity} {record.unit_name||''}</span></div><div className="fp-description" style={{padding:'0 16px 10px'}}>{planName?('检验方案 '+planName):'未匹配到启用中的检验方案'}</div>{recordMode==='item'?(items.length?<div className="fp-table-wrap"><table className="fp-table"><thead><tr><th>#</th><th>检验项目</th><th>检验要求</th><th>检验结果 *</th><th>实测值</th><th>备注</th></tr></thead><tbody>{items.map((row,index)=><tr key={row.item_id||index}><td>{index+1}</td><td>{row.name}</td><td>{row.requirement||'—'}</td><td>{record.status==='pending'?<ForgeSelectControl aria-label={'第'+(index+1)+'项检验结果'} className="fp-select" value={row.result} onChange={e=>setItem(index,'result',e.target.value)}><option value="pass">合格</option><option value="fail">不合格</option><option value="na">不适用</option></ForgeSelectControl>:<ForgeStatus value={row.result==='pass'?'completed':row.result==='fail'?'rejected':'draft'} label={row.result==='pass'?'合格':row.result==='fail'?'不合格':'不适用'}/>}</td><td>{record.status==='pending'?<input className="fp-input" aria-label={'第'+(index+1)+'项实测值'} value={row.measured_value} onChange={e=>setItem(index,'measured_value',e.target.value)}/>:(row.measured_value||'—')}</td><td>{record.status==='pending'?<input className="fp-input" aria-label={'第'+(index+1)+'项备注'} value={row.remarks} onChange={e=>setItem(index,'remarks',e.target.value)}/>:(row.remarks||'—')}</td></tr>)}</tbody></table></div>:<div style={{padding:'0 16px 14px'}}><ForgeEmpty title="未匹配到检验方案项目" description="请在检验规则中为该物料维护启用中的检验方案，或改用汇总数量录入。"/></div>):<div style={{padding:'0 16px 14px'}}><ForgeNotice>当前为汇总数量录入：只登记合格数量与不合格数量，不逐项录入检验项目结果。切换到「逐项录入」后可按检验方案逐项记录结果、实测值与备注。</ForgeNotice></div>}</div>
+<div className="card"><div className="fp-card-toolbar"><strong>检验结果录入</strong><span className="fp-grow"/>{record.status==='pending'?<ForgeSelectControl aria-label="记录方式" className="fp-select" value={recordMode} onChange={e=>setRecordMode(e.target.value)}><option value="summary">汇总数量录入</option><option value="item">逐项录入</option></ForgeSelectControl>:<span className="fp-secondary">记录方式 {recordMode==='item'?'逐项录入':'汇总数量录入'}</span>}<span className="fp-secondary">{items.length} 项 / 抽样 {record.total_quantity} {record.unit_name||''}</span></div><div className="fp-description" style={{padding:'0 16px 10px'}}>{planName?('检验方案 '+planName):'未匹配到启用中的检验方案'}</div>{recordMode==='item'?(items.length?<ForgeTableViewport className="fp-table-wrap"><ForgeTable className="fp-table"><thead><tr><th>#</th><th>检验项目</th><th>检验要求</th><th>检验结果 *</th><th>实测值</th><th>备注</th></tr></thead><tbody>{items.map((row,index)=><tr key={row.item_id||index}><td>{index+1}</td><td>{row.name}</td><td>{row.requirement||'—'}</td><td>{record.status==='pending'?<ForgeSelectControl aria-label={'第'+(index+1)+'项检验结果'} className="fp-select" value={row.result} onChange={e=>setItem(index,'result',e.target.value)}><option value="pass">合格</option><option value="fail">不合格</option><option value="na">不适用</option></ForgeSelectControl>:<ForgeStatus value={row.result==='pass'?'completed':row.result==='fail'?'rejected':'draft'} label={row.result==='pass'?'合格':row.result==='fail'?'不合格':'不适用'}/>}</td><td>{record.status==='pending'?<input className="fp-input" aria-label={'第'+(index+1)+'项实测值'} value={row.measured_value} onChange={e=>setItem(index,'measured_value',e.target.value)}/>:(row.measured_value||'—')}</td><td>{record.status==='pending'?<input className="fp-input" aria-label={'第'+(index+1)+'项备注'} value={row.remarks} onChange={e=>setItem(index,'remarks',e.target.value)}/>:(row.remarks||'—')}</td></tr>)}</tbody></ForgeTable></ForgeTableViewport>:<div style={{padding:'0 16px 14px'}}><ForgeEmpty title="未匹配到检验方案项目" description="请在检验规则中为该物料维护启用中的检验方案，或改用汇总数量录入。"/></div>):<div style={{padding:'0 16px 14px'}}><ForgeNotice>当前为汇总数量录入：只登记合格数量与不合格数量，不逐项录入检验项目结果。切换到「逐项录入」后可按检验方案逐项记录结果、实测值与备注。</ForgeNotice></div>}</div>
 <div className="card">{record.status==='pending'?<div className="form">
 <div className="field">
 <label>检验日期 *</label>

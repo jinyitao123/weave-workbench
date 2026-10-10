@@ -36,9 +36,18 @@ export function createServicePageHarness(page,options={}){
   function asNode(type,props,children=[]){return{type:typeof type==='function'?type.displayName||type.name:type,props:props||{},children:Array.isArray(children)?children.flat(Infinity):[children]}}
   const React={
     Fragment:'React.Fragment',
+    Children:{toArray:children=>children==null?[]:Array.isArray(children)?children.flat(Infinity):[children]},
+    isValidElement:node=>!!node&&typeof node==='object'&&'type'in node,
+    createContext:value=>({Provider:'ContextProvider',value}),
+    useContext:context=>context.value,
+    useLayoutEffect(){cursor++},
+    useId(){return 'harness-id-'+cursor++},
+    useSyncExternalStore(_subscribe,snapshot){cursor++;return snapshot()},
     createElement(type,props,...children){
       const normalized={...(props||{}),children:children.length?children.flat(Infinity):props&&props.children};
       const renderer=componentRenderers.get(type);
+      if(typeof type==='function'&&type.name==='ForgeButton')return type(normalized);
+      if(typeof type==='function'&&type.name==='ForgeRecordTable')return componentRenderers.get(components.RecordTable)(normalized);
       return renderer?renderer(normalized):asNode(type,normalized,normalized.children||[]);
     },
     useState(initial){const index=cursor++;if(!(index in states))states[index]=typeof initial==='function'?initial():initial;return[states[index],value=>{states[index]=typeof value==='function'?value(states[index]):value;stateChanges.push({index,value:states[index]})}]},

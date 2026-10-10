@@ -588,6 +588,7 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   const managerClient = await signIn(manager);
   const operatorClient = await signIn(operator);
   const foreignManagerClient = await signIn(foreignManager);
+  if(process.env.FORGE_SALES_PRICING_NATIVE_ONLY==='1'||process.env.FORGE_FEE_SOURCE_NATIVE_ONLY==='1'){await exerciseNativeSalesPricing();console.log(process.env.FORGE_FEE_SOURCE_NATIVE_ONLY==='1'?'PASS native contract clerk optional catalog refusals and direct-order fee save':'PASS isolated official Runtime PostgreSQL native sales pricing, discount and fee approvals');return;}
   const managerPermissions = payloadOf(await managerClient.request('/auth/me/permissions'));
   assert.ok(managerPermissions.systemPermissions?.includes('forge_service_manager'));
   assert.equal(managerPermissions.systemPermissions?.includes('setup.write'), false);
@@ -1073,5 +1074,94 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   assert.equal((await quoteSnapshot(quoteIds.keyRace)).revision, 2, 'different-key contention advances one revision');
   assert.equal((await receiptRows(quoteIds.keyRace)).length, 1, 'different-key contention persists only the winning receipt');
 
+  async function exerciseNativeSalesPricing() {
+    const clerk = await createCaller('销售经办', 'sales_order_operator');
+    const priceReviewer = await createCaller('价格复核', 'sales_order_reviewer');
+    const feeClerk = await createCaller('费用经办', 'sales_contract_operator');
+    const financeReviewer = await createCaller('财务复核', 'forge_finance_reviewer');
+    for (const [caller, positionName, permission] of [[priceReviewer, 'sales_order_reviewer', 'sales_order_reviewer'], [financeReviewer, 'finance_reviewer', 'forge_finance_reviewer']]) {
+      const position = await createPosition(positionName, permission);
+      await insertFixture('sys_user_position', { user_id: caller.id, position: positionName, organization_id: ORGANIZATION_ID, valid_from: new Date(Date.now() - 60_000).toISOString(), valid_until: null });
+    }
+    const clerkClient = await signIn(clerk), priceReviewerClient = await signIn(priceReviewer);
+    const feeClient = await signIn(feeClerk), financeClient = await signIn(financeReviewer);
+    if(process.env.FORGE_FEE_SOURCE_NATIVE_ONLY==='1'){
+      for(const object of ['forge_sales_shipment','forge_project','forge_project_sales_link']){
+        const forbidden=await feeClient.request('/data/'+object);assert.equal(forbidden.status,403,'contract clerk has no broadened '+object+' read grant');
+      }
+      const category=await insertFixture('forge_customer_category',{name:'费用权限客户分类',code:'FEE-CAT-'+RUN,organization_id:ORGANIZATION_ID});
+      const customer=await insertFixture('forge_customer',{name:'费用权限客户',category_id:category,responsible_id:feeClerk.id,owner_id:feeClerk.id,organization_id:ORGANIZATION_ID});
+      const order=await insertFixture('forge_sales_order',{name:'费用权限订单',code:'FEE-ORDER-'+RUN,customer_id:customer,planned_delivery_on:'2026-10-12',payment_term:'全额预付',status:'draft',total_amount:100,responsible_id:feeClerk.id,owner_id:feeClerk.id,organization_id:ORGANIZATION_ID});
+      assert.equal((await feeClient.request('/data/forge_sales_order')).status,200);
+      assert.equal((await feeClient.request('/data/forge_customer')).status,200);
+      const saved=await feeClient.request('/actions/forge_sales_additional_fee/sales_additional_fee_draft_save','POST',{params:{request_key:'fee-source-'+RUN,source_type:'sales_order',source_id:order,bearing_type:'customer',lines_json:JSON.stringify([{name:'运输费',untaxed_amount:10,tax_rate:13}]),occurred_on:'2026-10-10',settlement_type:'order'}});
+      assert.equal(saved.status,200,messageOf(saved));assert.ok(resultOf(saved).id);
+      return;
+    }
+    const customerCategoryId=await insertFixture('forge_customer_category',{name:'本轮价格客户分类',code:'PRICE-CUSTOMER-CAT-'+RUN,organization_id:ORGANIZATION_ID});
+    const customerId = await insertFixture('forge_customer', { category_id:customerCategoryId,name: '本轮价格客户', responsible_id: clerk.id, owner_id: clerk.id, organization_id: ORGANIZATION_ID });
+    const categoryId = await insertFixture('forge_material_category', { name: '本轮价格材料分类', code: 'PRICE-CAT-' + RUN, organization_id: ORGANIZATION_ID });
+    const unitId = await insertFixture('forge_unit', { name: '件', code: 'PRICE-UNIT-' + RUN, organization_id: ORGANIZATION_ID });
+    const materialId = await insertFixture('forge_material', { name: '本轮价格物料', code: 'PRICE-MAT-' + RUN, model: 'TEST', category_id: categoryId, unit_id: unitId, property: 'raw_material', source_type: 'purchased', status: 'active', organization_id: ORGANIZATION_ID });
+    const skuId = await insertFixture('forge_material_sku', { name: '标准规格', code: 'PRICE-SKU-' + RUN, material_id: materialId, sale_price: '100.0001', enabled: true, organization_id: ORGANIZATION_ID });
+    const priceSave = await clerkClient.request('/actions/forge_sales_price_request/sales_price_draft_save', 'POST', { params: { request_key: 'native-price-' + RUN, draft_json: JSON.stringify({ kind: 'adjustment', reason: '部署原生价格复核', lines: [{ sku_id: skuId, quantity: '2.5000', proposed_price: '12.3456' }] }) } });
+    assert.equal(priceSave.status, 200, messageOf(priceSave));
+    const price = resultOf(priceSave);
+    const priceSubmit = await clerkClient.request('/actions/forge_sales_price_request/sales_price_submit/' + price.id, 'POST', { params: { expected_revision: price.revision } });
+    assert.equal(priceSubmit.status, 200, messageOf(priceSubmit)+' '+safeOutput(runtimeOutput,databaseUrl).slice(-1500));
+    const priceSubmitted=(await postgres.query('SELECT status,review_owner_id,approval_status,submitted_by FROM forge_sales_price_request WHERE id=$1',[price.id])).rows[0];assert.equal(priceSubmitted.review_owner_id,priceReviewer.id,'native submission retained the selected real reviewer');
+    async function approve(client, objectName, recordId, selfClient) {
+      let request;
+      const deadline = Date.now() + 15000;
+      while (Date.now() < deadline) {
+        const inbox = await client.request('/approvals/requests');
+        assert.equal(inbox.status, 200, messageOf(inbox));
+        const data = payloadOf(inbox), rows = Array.isArray(data) ? data : data.requests || data.records || data.items || [];
+        request = rows.find(row => row.recordId === recordId || row.record_id === recordId);
+        if (request) break;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      if(!request?.id){const tables=await postgres.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND (table_name LIKE '%approval%' OR table_name LIKE '%flow%')");console.log('native approval diagnostic tables',tables.rows.map(row=>row.table_name));for(const table of tables.rows.filter(row=>['sys_approval_request','sys_approval_step','sys_automation_run','sys_flow_execution'].includes(row.table_name))){const result=await postgres.query('SELECT row_to_json(item) AS record FROM '+table.table_name+' item LIMIT 5');console.log(table.table_name,JSON.stringify(result.rows))}console.log('native runtime diagnostic',safeOutput(runtimeOutput,databaseUrl))}
+      assert.ok(request?.id, objectName + ' formed a native approval assigned to the live independent employee');
+      if (selfClient) {
+        const rejected = await selfClient.request('/approvals/requests/' + request.id + '/approve', 'POST', { comment: '自审必须拒绝' });
+        assert.ok([403, 404].includes(rejected.status), 'applicant cannot approve their own application');
+      }
+      const decision = await client.request('/approvals/requests/' + request.id + '/approve', 'POST', { comment: '独立员工复核通过' });
+      assert.equal(decision.status, 200, safeOutput(JSON.stringify(decision.value),databaseUrl)+' '+safeOutput(runtimeOutput,databaseUrl).slice(-3000));
+    }
+    await approve(priceReviewerClient, 'forge_sales_price_request', price.id, clerkClient);
+    const deadline = Date.now() + 10000;
+    let priceState;
+    do {
+      priceState = (await postgres.query('SELECT status,effect_status,effect_message FROM forge_sales_price_request WHERE id=$1', [price.id])).rows[0];
+      if (priceState?.effect_status === 'applied') break;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } while (Date.now() < deadline);
+    assert.equal(priceState.effect_status, 'applied', priceState.effect_message);
+    assert.equal(Number((await postgres.query('SELECT sale_price FROM forge_material_sku WHERE id=$1', [skuId])).rows[0].sale_price), 12.3456);
+    assert.equal((await operatorClient.request('/data/forge_sales_price_request/' + price.id)).status, 403, 'unrelated service role cannot read price application');
+    const orderId = await insertFixture('forge_sales_order', { name: '本轮优惠订单',planned_delivery_on:'2026-10-12',payment_term:'全额预付', code: 'PRICE-ORDER-' + RUN, customer_id: customerId, total_amount: 100, status: 'draft', owner_id: clerk.id, responsible_id: clerk.id, organization_id: ORGANIZATION_ID });
+    const discountSave = await clerkClient.request('/actions/forge_sales_discount_request/sales_discount_draft_save', 'POST', { params: { request_key: 'native-discount-' + RUN, order_id: orderId, discount_type: 'amount', discount_value: 10, reason: '本轮客户优惠复核' } });
+    assert.equal(discountSave.status, 200, messageOf(discountSave));
+    const discount = resultOf(discountSave);
+    const discountSubmit = await clerkClient.request('/actions/forge_sales_discount_request/sales_discount_submit/' + discount.id, 'POST', { params: { expected_revision: discount.revision } });
+    assert.equal(discountSubmit.status, 200, messageOf(discountSubmit));
+    await approve(priceReviewerClient, 'forge_sales_discount_request', discount.id, clerkClient);
+    const feeCustomerId = await insertFixture('forge_customer', { category_id:customerCategoryId,name: '本轮费用客户', responsible_id: feeClerk.id, owner_id: feeClerk.id, organization_id: ORGANIZATION_ID });
+    const feeSave = await feeClient.request('/actions/forge_sales_additional_fee/sales_additional_fee_draft_save', 'POST', { params: { request_key: 'native-fee-' + RUN, source_type: 'manual', source_id: feeCustomerId, bearing_type: 'customer', lines_json: JSON.stringify([{ name: '运输费', category: '物流', untaxed_amount: 10, tax_rate: 13 }]), occurred_on: '2026-10-10', settlement_type: 'order' } });
+    assert.equal(feeSave.status, 200, messageOf(feeSave));
+    const fee = resultOf(feeSave);
+    const feeSubmit = await feeClient.request('/actions/forge_sales_additional_fee/sales_additional_fee_submit/' + fee.id, 'POST', { params: { expected_revision: fee.revision } });
+    assert.equal(feeSubmit.status, 200, messageOf(feeSubmit));
+    await approve(financeClient, 'forge_sales_additional_fee', fee.id, feeClient);
+    const feeRead = await financeClient.request('/data/forge_sales_additional_fee/' + fee.id);
+    assert.equal(feeRead.status, 200, messageOf(feeRead));
+    const feeRecord=payloadOf(feeRead).record||payloadOf(feeRead);assert.equal(Number(feeRecord.total_amount), 11.3,JSON.stringify(feeRead.value));
+    await stopRuntime(); await startRuntime();
+    assert.equal((await postgres.query('SELECT effect_status FROM forge_sales_price_request WHERE id=$1', [price.id])).rows[0].effect_status, 'applied');
+    assert.equal((await postgres.query('SELECT document_status FROM forge_sales_additional_fee WHERE id=$1', [fee.id])).rows[0].document_status, 'active');
+  }
+  await t.test('new sales price, discount and additional fee actions create and complete native employee approvals', exerciseNativeSalesPricing);
   console.log('PASS isolated PostgreSQL service quotation revision transitions, draft receipts, authorization, rollback, idempotency, and concurrency');
 });
