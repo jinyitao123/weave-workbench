@@ -84,9 +84,9 @@ const expectedRegistrations: Record<string, Registration[]> = {
   'gooeypi-team-development.ts': [
     { kind: 'tool', name: 'gooeypi_team_development_list' },
     { kind: 'tool', name: 'gooeypi_team_development_open' },
-    { kind: 'tool', name: 'gooeypi_team_development_propose_new' },
     { kind: 'tool', name: 'gooeypi_team_development_context' },
-    { kind: 'tool', name: 'gooeypi_team_development_propose' },
+    { kind: 'tool', name: 'gooeypi_team_development_guide' },
+    { kind: 'tool', name: 'gooeypi_team_development_preview' },
     { kind: 'tool', name: 'gooeypi_team_development_save' },
     { kind: 'tool', name: 'gooeypi_team_development_trial' },
     { kind: 'tool', name: 'gooeypi_team_development_trial_status' },
@@ -162,7 +162,7 @@ describe('shipped extension contracts', () => {
     }
   })
 
-  it('routes Pi team-development tools to the scoped desktop bridge without saving proposals', async () => {
+  it('routes Pi team-development tools to the scoped desktop bridge and tells Pi how to write a change only when asked', async () => {
     const requests: Array<{ url: string; options?: RequestInit; body: Record<string, unknown> }> = []
     let rejectNext = false
     vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, options?: RequestInit) => {
@@ -173,7 +173,7 @@ describe('shipped extension contracts', () => {
         return Response.json({ ok: false, error: '团队草稿版本已变化' })
       }
       const result = body.method === 'list' ? { teams: [{ name: '反馈分类团队' }] }
-        : body.method === 'propose_new_team' || body.method === 'propose' ? '提案已生成，等待开发者检查'
+        : body.method === 'preview' ? { changes: ['修改成员：整理员'] }
           : { method: body.method }
       return Response.json({ ok: true, result })
     }))
@@ -186,22 +186,38 @@ describe('shipped extension contracts', () => {
     const listed = await tools.get('gooeypi_team_development_list')!.execute('list', {})
     expect(listed.content[0]?.text).toContain('反馈分类团队')
     await tools.get('gooeypi_team_development_open')!.execute('open', { team_name: '反馈分类团队' })
-    await tools.get('gooeypi_team_development_propose_new')!.execute('new', { name: '反馈团队', objective: '归类员工反馈' })
-    await tools.get('gooeypi_team_development_context')!.execute('context', {})
-    const proposed = await tools.get('gooeypi_team_development_propose')!.execute('propose', { operations_json: '[{"kind":"member","member":"整理员","duty":"按模块分类"}]' })
-    expect(proposed.content[0]?.text).toContain('提案已生成')
+    expect(tools.has('gooeypi_team_development_propose_new')).toBe(false)
+    const context = JSON.parse((await tools.get('gooeypi_team_development_context')!.execute('context', {})).content[0]!.text) as { method: string; editable: Array<{ topic: string; title: string; covers: string }>; console_only: string }
+    expect(context.method).toBe('context')
+    expect(context.console_only).toContain('Weave 管理端')
+    // The context names what can be changed; the exact shape of each change is a separate read.
+    expect(context.editable.map((item) => item.topic)).toEqual(['team', 'member', 'skill', 'business_action', 'flow', 'step', 'step_input', 'delivery', 'business_completion'])
+    expect(JSON.stringify(context.editable)).not.toContain('kind:')
+    for (const { topic } of context.editable) {
+      const read = JSON.parse((await tools.get('gooeypi_team_development_guide')!.execute('guide', { topic })).content[0]!.text) as { title: string; operations: string[]; rules: string }
+      expect(read.operations.join('\n')).toContain('kind:"')
+      expect(read.rules).toContain('准确名称')
+    }
+    await expect(tools.get('gooeypi_team_development_guide')!.execute('guide', { topic: 'engine' })).rejects.toThrow('可读取的类别')
+    await expect(tools.get('gooeypi_team_development_guide')!.execute('guide', { topic: 'constructor' })).rejects.toThrow('可读取的类别')
+    const everyKind = [...new Set((await Promise.all(context.editable.map(async ({ topic }) => (await tools.get('gooeypi_team_development_guide')!.execute('guide', { topic })).content[0]!.text))).join('\n').match(/kind:\\"[a-z_]+/g) ?? [])].map((kind) => kind.slice(7)).sort()
+    expect(everyKind).toEqual(['business_completion', 'capability', 'delivery', 'flow', 'flow_add', 'join', 'member', 'member_add', 'member_remove', 'result_protocol', 'skill', 'step', 'step_add', 'step_input', 'step_remove', 'team'])
+    const described = (fixture.tools as Array<{ name: string; description: string; promptGuidelines?: string[] }>).filter((tool) => tool.name.startsWith('gooeypi_team_development_'))
+    for (const tool of described) expect(`${tool.description}${(tool.promptGuidelines ?? []).join('')}`).not.toMatch(/右侧|侧栏|面板|kind:/)
+    const previewed = await tools.get('gooeypi_team_development_preview')!.execute('preview', { operations_json: '[{"kind":"member","member":"整理员","duty":"按模块分类"}]' })
+    expect(previewed.content[0]?.text).toContain('修改成员：整理员')
     const saved = await tools.get('gooeypi_team_development_save')!.execute('save', { operations_json: '[{"kind":"member","member":"整理员","duty":"按模块分类"}]' })
     expect(saved.content[0]?.text).toContain('save')
     await tools.get('gooeypi_team_development_trial')!.execute('hidden-tool-call-id', { workflow_name: '分类流程', input: '测试材料', simulation_actions: ['提交合同'] })
     await tools.get('gooeypi_team_development_trial_status')!.execute('status', {})
     await tools.get('gooeypi_team_development_update_team')!.execute('publish', {})
-    expect(requests.map(({ body }) => body.method)).toEqual(['list', 'open', 'propose_new_team', 'context', 'propose', 'save', 'trial', 'trial_status', 'update_team'])
-    expect(requests[4]?.body.params).toEqual({ operations: [{ kind: 'member', member: '整理员', duty: '按模块分类' }] })
-    expect(requests[6]?.body.params).toEqual({ workflow_name: '分类流程', input: '测试材料', simulation_actions: ['提交合同'] })
+    expect(requests.map(({ body }) => body.method)).toEqual(['list', 'open', 'context', 'preview', 'save', 'trial', 'trial_status', 'update_team'])
+    expect(requests[3]?.body.params).toEqual({ operations: [{ kind: 'member', member: '整理员', duty: '按模块分类' }] })
+    expect(requests[5]?.body.params).toEqual({ workflow_name: '分类流程', input: '测试材料', simulation_actions: ['提交合同'] })
     expect(JSON.stringify(requests)).not.toContain('hidden-tool-call-id')
     for (const request of requests) expect(new Headers(request.options?.headers).get('authorization')).toBe('Bearer inert-test-token')
-    await expect(tools.get('gooeypi_team_development_propose')!.execute('invalid', { operations_json: '{' })).rejects.toThrow('不是有效 JSON 数组')
-    expect(requests).toHaveLength(9)
+    await expect(tools.get('gooeypi_team_development_preview')!.execute('invalid', { operations_json: '{' })).rejects.toThrow('不是有效 JSON 数组')
+    expect(requests).toHaveLength(8)
     rejectNext = true
     await expect(tools.get('gooeypi_team_development_open')!.execute('stale', { team_name: '反馈分类团队' })).rejects.toThrow('团队草稿版本已变化')
   })

@@ -45,7 +45,6 @@ export interface TeamDevelopmentState {
   teamId?: string
   revision?: number
   proposal?: TeamDevelopmentProposalResult
-  createProposal?: { name: string; objective: string }
 }
 export interface DevelopmentTrialAction extends EnterpriseBusinessCapability {
   simulationAuthorized: boolean

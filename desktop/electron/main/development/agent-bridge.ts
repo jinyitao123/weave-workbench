@@ -84,7 +84,6 @@ interface DevelopmentTrialReceipt { request_id?: string; run_id?: string }
 interface StoredDevelopmentTrial extends DevelopmentTrial {}
 interface StoredDevelopment {
   context?: Omit<DevelopmentContext, 'catalog'>
-  createProposal?: { name: string; objective: string }
   trial?: StoredDevelopmentTrial
 }
 
@@ -150,7 +149,6 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
   private readonly runtimeTokens = new Map<string, string>()
   private readonly contexts = new Map<string, DevelopmentContext>()
   private readonly listedTeams = new Map<string, Array<{ id: string; name: string }>>()
-  private readonly createProposals = new Map<string, { name: string; objective: string }>()
   private readonly trials = new Map<string, DevelopmentTrial>()
   private readonly userTurns = new Map<string, DevelopmentUserTurn>()
   private readonly pendingUserCommands = new Map<string, PendingDevelopmentUserCommand>()
@@ -178,7 +176,6 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
         accountKey: context.accountKey, teamId: context.teamId, revision: context.revision, document: context.document,
         selected: context.selected, proposal: context.proposal, pendingSave: context.pendingSave, stale: context.stale,
       } } : {}),
-      ...(this.createProposals.has(claim.token) ? { createProposal: this.createProposals.get(claim.token) } : {}),
       ...(this.trials.has(claim.token) ? { trial: this.trials.get(claim.token) } : {}),
     }
     await this.store.checkpoint(this.storageKey(accountKey, claim.sessionPath), 'team-development-v1', value)
@@ -190,10 +187,12 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     const value = saved.value
     if (value.context && value.context.accountKey !== accountKey) return undefined
     if (value.context) {
+      // A stored preview has nowhere to be applied; only a save awaiting confirmation is kept.
+      if (!value.context.pendingSave) value.context.proposal = undefined
       const developer = await this.options.developer()
       const remote = await this.options.team(value.context.teamId, developer.accountId)
       if (remote.revision !== value.context.revision || !sameDocument(remote.document, value.context.document)) {
-        if (value.context.proposal || value.context.pendingSave) value.context.stale = true
+        if (value.context.pendingSave) value.context.stale = true
         else {
           value.context.revision = remote.revision
           value.context.document = structuredClone(remote.document)
@@ -202,7 +201,6 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       }
       if (token && !this.contexts.has(token)) this.contexts.set(token, { ...value.context, catalog: await this.options.catalog() })
     }
-    if (token && value.createProposal) this.createProposals.set(token, value.createProposal)
     if (token && value.trial) this.trials.set(token, value.trial)
     return value
   }
@@ -381,7 +379,6 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       this.clearUserTurn(token)
     }
     this.contexts.set(token, { ...context, accountKey, document: structuredClone(context.document), proposal: undefined, pendingSave: undefined, stale: false })
-    this.createProposals.delete(token)
     if (!sameIdentity) this.trials.delete(token)
     await this.persist(claim)
   }
@@ -397,27 +394,26 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     } : undefined
   }
 
-  async getState(runtimeId: string): Promise<{ teamId?: string; revision?: number; proposal?: TeamDevelopmentProposal & { baseDocument: TeamDefinition; revision: number }; createProposal?: { name: string; objective: string } }> {
+  async getState(runtimeId: string): Promise<{ teamId?: string; revision?: number; proposal?: TeamDevelopmentProposal & { baseDocument: TeamDefinition; revision: number } }> {
     const token = this.runtimeTokens.get(runtimeId)
     const claim = token ? this.claimForToken(token) : undefined
     if (claim?.sessionPath && !this.contexts.has(token!)) await this.restore(await this.options.accountKey(), claim.sessionPath, token)
     const context = token ? this.contexts.get(token) : undefined
     if (context && await this.options.accountKey() !== context.accountKey) throw new Error('团队开发账号已变化')
-    return { ...(context ? { teamId: context.teamId, revision: context.revision } : {}), ...(context?.proposal ? { proposal: { ...structuredClone(context.proposal), baseDocument: structuredClone(context.document), revision: context.revision } } : {}), ...(token && this.createProposals.has(token) ? { createProposal: this.createProposals.get(token) } : {}) }
+    return { ...(context ? { teamId: context.teamId, revision: context.revision } : {}), ...(context?.proposal ? { proposal: { ...structuredClone(context.proposal), baseDocument: structuredClone(context.document), revision: context.revision } } : {}) }
   }
 
-  async getStateForSession(sessionFile: string): Promise<{ teamId?: string; revision?: number; proposal?: TeamDevelopmentProposal & { baseDocument: TeamDefinition; revision: number }; createProposal?: { name: string; objective: string } }> {
+  async getStateForSession(sessionFile: string): Promise<{ teamId?: string; revision?: number; proposal?: TeamDevelopmentProposal & { baseDocument: TeamDefinition; revision: number } }> {
     const saved = await this.restore(await this.options.accountKey(), sessionFile)
     const context = saved?.context
-    return { ...(context ? { teamId: context.teamId, revision: context.revision } : {}), ...(context?.proposal ? { proposal: { ...context.proposal, baseDocument: context.document, revision: context.revision } } : {}), ...(saved?.createProposal ? { createProposal: saved.createProposal } : {}) }
+    return { ...(context ? { teamId: context.teamId, revision: context.revision } : {}), ...(context?.proposal ? { proposal: { ...context.proposal, baseDocument: context.document, revision: context.revision } } : {}) }
   }
 
-  invalidateAccount(): void { this.revokeAllClaims(); this.contexts.clear(); this.runtimeTokens.clear(); this.listedTeams.clear(); this.createProposals.clear(); this.userTurns.clear(); this.pendingUserCommands.clear() }
+  invalidateAccount(): void { this.revokeAllClaims(); this.contexts.clear(); this.runtimeTokens.clear(); this.listedTeams.clear(); this.userTurns.clear(); this.pendingUserCommands.clear() }
 
   protected onClaimRevoked(claim: CapabilityClaim): void {
     this.contexts.delete(claim.token)
     this.listedTeams.delete(claim.token)
-    this.createProposals.delete(claim.token)
     this.trials.delete(claim.token)
     this.clearUserTurn(claim.token)
     for (const [runtimeId, token] of this.runtimeTokens) if (token === claim.token) this.runtimeTokens.delete(runtimeId)
@@ -432,7 +428,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       team: {
         name: context.document.name,
         objective: context.document.objective,
-        draftStatus: context.stale ? '远端草稿已变化；当前修改保留在原版本，保存、试跑和更新团队会先拒绝' : '当前草稿',
+        draftStatus: context.stale ? '团队草稿已在别处变化；这里显示的是变化前的内容。保存、试跑和更新团队会先拒绝，请重新打开该团队读取最新草稿' : '当前草稿',
         pendingChanges: context.pendingSave?.proposal.changes,
         members: members.map((item) => ({
           name: item.configuration.displayName, role: item.configuration.role === 'avatar' ? '负责人' : '成员',
@@ -482,7 +478,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       if (typeof name !== 'string') return name
       if (addedMembers.has(name)) return name
       const found = context.document.members.filter((item) => item.configuration.displayName === name)
-      if (found.length !== 1) throw new Error(`成员“${name}”不存在或名称重复，请在侧栏确认准确成员`)
+      if (found.length !== 1) throw new Error(`成员“${name}”不存在或名称重复，请读取团队上下文确认准确名称`)
       return found[0]!.id
     }
     const flow = (name: unknown) => {
@@ -560,7 +556,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       if (remote.revision !== attempt.baseRevision || !sameDocument(remote.document, attempt.baseDocument)) {
         context.stale = true
         await this.persist(claim)
-        throw new Error('团队草稿已变化或侧栏存在未保存修改。原修改已保留；请先解决草稿冲突，再继续保存。')
+        throw new Error('团队草稿已变化，与本次修改的起点不一致。原修改已保留但不会覆盖新内容；请重新打开该团队读取最新草稿，再重新提交修改。')
       }
     } else {
       const proposal = applyTeamDevelopmentOperations(context.document, this.namedOperations(context, rawOperations), context.catalog)
@@ -576,7 +572,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       if (remote.revision !== attempt.baseRevision || !sameDocument(remote.document, attempt.baseDocument)) {
         context.stale = true
         await this.persist(claim)
-        throw new Error('团队草稿已变化或侧栏存在未保存修改。原修改已保留；请先解决草稿冲突，再继续保存。')
+        throw new Error('团队草稿已变化，与本次修改的起点不一致。原修改已保留但不会覆盖新内容；请重新打开该团队读取最新草稿，再重新提交修改。')
       }
     }
 
@@ -657,7 +653,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     if (remote.revision !== context.revision || !sameDocument(remote.document, context.document)) {
       context.stale = true
       await this.persist(claim)
-      throw new Error('团队草稿或侧栏修改尚未与远端保存版本一致；请先解决草稿冲突，再试跑。')
+      throw new Error('团队草稿已在别处变化，与当前读取的内容不一致；请重新打开该团队读取最新草稿，再试跑。')
     }
     context.stale = false
     const selectors = requestedSimulationSelectors(params.simulation_actions)
@@ -815,7 +811,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     if (remote.revision !== context.revision || !sameDocument(remote.document, context.document)) {
       context.stale = true
       await this.persist(claim)
-      throw new Error('团队草稿已变化或侧栏有未保存修改；本次没有更新团队，原修改仍保留。')
+      throw new Error('团队草稿已在别处变化，与当前读取的内容不一致；本次没有更新团队。请重新打开该团队读取最新草稿并重新试跑。')
     }
     if (remote.published_revision === context.revision) return { team: remote.document.name, status: '已更新', message: '该团队版本已经生效。' }
     requireDeclaredBusinessCompletion(context.document)
@@ -853,14 +849,6 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       this.listedTeams.set(claim.token, teams.map((team) => ({ id: team.id, name: team.name })))
       return { teams: teams.map((team) => ({ name: team.name, objective: team.objective })) }
     }
-    if (method === 'propose_new_team') {
-      const name = typeof params.name === 'string' ? params.name.trim() : ''
-      const objective = typeof params.objective === 'string' ? params.objective.trim() : ''
-      if (!name || name.length > 80 || !objective || objective.length > 2000) throw new Error('新团队需要名称和明确目标')
-      this.createProposals.set(claim.token, { name, objective })
-      await this.persist(claim)
-      return { name, objective, message: '新团队提案已送到右侧开发面板，需开发者检查后创建；创建时系统自动加入负责人和执行成员，流程需随后配置。' }
-    }
     if (method === 'open') {
       const teamName = typeof params.team_name === 'string' ? params.team_name : ''
       let known = this.listedTeams.get(claim.token)
@@ -872,7 +860,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       if (!contextAtDispatch) contextAtDispatch = this.contexts.get(claim.token)
       const [draft, catalog] = await Promise.all([this.options.team(teamId, developer.accountId), this.options.catalog()])
       const previous = this.contexts.get(claim.token)
-      if (previous && previous.teamId !== teamId && (previous.proposal || previous.pendingSave)) throw new Error('当前团队有未处理修改，先保存或解决后再切换团队')
+      if (previous && previous.teamId !== teamId && previous.pendingSave) throw new Error('当前团队有一项修改的保存结果尚未确认；请先重新打开该团队核对，再切换团队')
       if (previous?.teamId === teamId && previous.pendingSave) {
         const attempt = previous.pendingSave
         if (draft.revision > attempt.baseRevision && sameDocument(draft.document, attempt.proposal.document)) {
@@ -883,35 +871,34 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
           await this.persist(claim)
           return { name: draft.document.name, objective: draft.document.objective, message: '上次团队修改已保存，当前草稿已同步。' }
         }
-        if (draft.revision !== attempt.baseRevision || !sameDocument(draft.document, attempt.baseDocument)) previous.stale = true
+        if (draft.revision === attempt.baseRevision && sameDocument(draft.document, attempt.baseDocument)) {
+          await this.persist(claim)
+          return { name: previous.document.name, objective: previous.document.objective, message: '该团队有一项保存结果待核对，原修改仍保留；请先重试保存或查看当前上下文。' }
+        }
+        // The draft moved on elsewhere, so the kept change can never be written
+        // on its base. Reopening is the request to start over from the latest draft.
+        if (this.contexts.get(claim.token) !== contextAtDispatch) throw new Error('当前团队开发上下文已变化；请重新读取后再打开团队。')
+        const previousIdentity = this.draftIdentity(previous)
+        this.acceptSavedDocument(previous, draft)
+        previous.catalog = catalog
+        this.rebindUserTurnAfterControlledSave(claim.token, sourceAtDispatch, previousIdentity, previous)
         await this.persist(claim)
-        return { name: previous.document.name, objective: previous.document.objective, message: previous.stale
-          ? '该团队的修改仍保留，但远端草稿已变化；请先处理保存冲突。'
-          : '该团队有一项保存结果待核对，原修改仍保留；请先重试保存或查看当前上下文。' }
-      }
-      if (previous?.teamId === teamId && previous.proposal) {
-        if (previous.revision === draft.revision && sameDocument(previous.document, draft.document)) return { name: previous.document.name, objective: previous.document.objective, message: '该团队已有待应用提案，已在右侧团队开发面板保留。' }
-        previous.stale = true
-        await this.persist(claim)
-        return { name: previous.document.name, objective: previous.document.objective, message: '该团队已有提案且远端草稿已变化；提案仍保留，请先处理草稿冲突。' }
+        return { name: draft.document.name, objective: draft.document.objective, discardedChanges: attempt.proposal.changes, message: '团队草稿已在别处变化，上一项未保存的修改已放弃，当前为最新草稿；请读取上下文后按最新内容重新提交。' }
       }
       const nextContext: DevelopmentContext = { accountKey: await this.options.accountKey(), teamId, revision: draft.revision, document: structuredClone(draft.document), catalog, stale: false }
       this.assertPiOpenContextChange(claim.token, sourceAtDispatch, contextAtDispatch, nextContext)
       this.contexts.set(claim.token, nextContext)
-      this.createProposals.delete(claim.token)
       await this.persist(claim)
     }
     if (!this.contexts.has(claim.token) && claim.sessionPath) await this.restore(await this.options.accountKey(), claim.sessionPath, claim.token)
     const context = this.contexts.get(claim.token)
-    if (!context || await this.options.accountKey() !== context.accountKey) throw new Error('请先在团队开发侧栏选择团队，或调用可开发团队列表')
+    if (!context || await this.options.accountKey() !== context.accountKey) throw new Error('请先查找可开发团队并打开团队草稿')
     if (method === 'open') return { name: context.document.name, objective: context.document.objective, message: '已打开团队草稿；请读取完整上下文后再提修改。' }
     if (method === 'context') return this.readableContext(context)
-    if (method === 'propose') {
+    if (method === 'preview') {
       if (context.pendingSave) throw new Error('上一项团队修改的保存结果尚未确认；请先重试保存或读取当前状态。')
-      const proposal = applyTeamDevelopmentOperations(context.document, this.namedOperations(context, params.operations), context.catalog)
-      context.proposal = proposal
-      await this.persist(claim)
-      return { changes: proposal.changes, message: '修改已在 Pi 主会话右侧的团队开发面板待审，尚未应用、保存或发布。' }
+      const preview = applyTeamDevelopmentOperations(context.document, this.namedOperations(context, params.operations), context.catalog)
+      return { changes: preview.changes, message: '以上是预览，没有保存或发布，也没有留下待处理内容。开发者同意后提交同一组修改保存。' }
     }
     if (method === 'save') return this.saveTeam(context, developer, params.operations, claim, sourceAtDispatch)
     if (method === 'trial') return this.runTrial(context, developer, params, claim, sourceAtDispatch)
